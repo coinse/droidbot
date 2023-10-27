@@ -683,8 +683,8 @@ class SetTextEvent(UIEvent):
 
     def send(self, device):
         x, y = UIEvent.get_xy(x=self.x, y=self.y, view=self.view)
-        touch_event = TouchEvent(x=x, y=y)
-        touch_event.send(device)
+        device.view_long_touch(x=x, y=y, duration=200)
+        device.view_touch(x=x, y=y)
         device.view_set_text(self.text)
         return True
 

@@ -28,7 +28,10 @@ class App(object):
         from androguard.core.bytecodes.apk import APK
         self.apk = APK(self.app_path)
         self.package_name = self.apk.get_package()
-        self.main_activity = self.apk.get_main_activity()
+        main_activities = self.apk.get_main_activities()
+        if 'leakcanary.internal.activity.LeakLauncherActivity' in main_activities:
+            main_activities.remove('leakcanary.internal.activity.LeakLauncherActivity')
+        self.main_activity = sorted(main_activities)[0]
         self.permissions = self.apk.get_permissions()
         self.activities = self.apk.get_activities()
         self.possible_broadcasts = self.get_possible_broadcasts()

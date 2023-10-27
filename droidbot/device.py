@@ -184,7 +184,7 @@ class Device(object):
             temp_dir = os.path.join(self.output_dir, "temp")
             if os.path.exists(temp_dir):
                 import shutil
-                shutil.rmtree(temp_dir)
+                shutil.rmtree(temp_dir, ignore_errors=True)
 
     def tear_down(self):
         for adapter in self.adapters:
@@ -802,7 +802,7 @@ class Device(object):
             remote_image_path = "/sdcard/screen_%s.png" % tag
             self.adb.shell("screencap -p %s" % remote_image_path)
             self.pull_file(remote_image_path, local_image_path)
-            self.adb.shell("rm %s" % remote_image_path)
+            self.adb.shell("rm -f %s" % remote_image_path)
 
         return local_image_path
 
@@ -812,6 +812,9 @@ class Device(object):
         try:
             views = self.get_views()
             foreground_activity = self.get_top_activity_name()
+            if foreground_activity is None: # hotfix
+                foreground_activity = "none.package.name/none.activity.name"
+
             activity_stack = self.get_current_activity_stack()
             background_services = self.get_service_names()
             screenshot_path = self.take_screenshot()
@@ -881,11 +884,16 @@ class Device(object):
             else:
                 self.logger.warning("Failed to get views using OpenCV.")
         if self.droidbot_app and self.adapters[self.droidbot_app]:
-            views = self.droidbot_app.get_views()
-            if views:
-                return views
-            else:
-                self.logger.warning("Failed to get views using Accessibility.")
+            max_tries = 10
+            tries = 0
+            while tries < max_tries:
+                views = self.droidbot_app.get_views()
+                if views:
+                    return views
+                else:
+                    self.logger.warning("Failed to get views using Accessibility. Retrying...")
+                    tries += 1
+                    time.sleep(0.2)
 
         self.logger.warning("failed to get current views!")
         return None
